@@ -151,16 +151,92 @@ let conteudoFinal = "";
 
 function extrairNomeData(linha) {
 
-  const padrao =
-    /[-•]?\s*(.*?)\s*\((\d{2})\/(\d{2})\)/;
+  linha = linha.trim();
 
-  const match = linha.trim().match(padrao);
+  // Ignora desconhecidos
+  if (linha.includes(": ?")) {
+    return null;
+  }
 
-  if (match) {
+  const meses = {
+    janeiro: 1,
+    fevereiro: 2,
+    março: 3,
+    marco: 3,
+    abril: 4,
+    maio: 5,
+    junho: 6,
+    julho: 7,
+    agosto: 8,
+    setembro: 9,
+    outubro: 10,
+    novembro: 11,
+    dezembro: 12
+  };
+
+  // FORMATO ANTIGO:
+  // - João Silva (23/06)
+  const formatoParenteses =
+    /[-•]?\s*(.*?)\s*\((\d{1,2})\/(\d{1,2})\)/i;
+
+  const matchParenteses =
+    linha.match(formatoParenteses);
+
+  if (matchParenteses) {
     return {
-      nome: match[1].trim(),
-      dia: parseInt(match[2]),
-      mes: parseInt(match[3])
+      nome: matchParenteses[1].trim(),
+      dia: parseInt(matchParenteses[2]),
+      mes: parseInt(matchParenteses[3])
+    };
+  }
+
+  // NOVO FORMATO:
+  // Afonso: 02 maio
+  const formatoTexto =
+    /(.*?):\s*(\d{1,2})\s+([a-zçãéô]+)$/i;
+
+  const matchTexto =
+    linha.match(formatoTexto);
+
+  if (matchTexto) {
+
+    const nome =
+      matchTexto[1].trim();
+
+    const dia =
+      parseInt(matchTexto[2]);
+
+    const mesTexto =
+      matchTexto[3]
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+
+    const mes =
+      meses[mesTexto];
+
+    if (!mes) return null;
+
+    return {
+      nome,
+      dia,
+      mes
+    };
+  }
+
+  // FORMATO:
+  // Nome: 02/05
+  const formatoBarra =
+    /(.*?):\s*(\d{1,2})\/(\d{1,2})$/i;
+
+  const matchBarra =
+    linha.match(formatoBarra);
+
+  if (matchBarra) {
+    return {
+      nome: matchBarra[1].trim(),
+      dia: parseInt(matchBarra[2]),
+      mes: parseInt(matchBarra[3])
     };
   }
 
